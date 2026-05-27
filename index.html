@@ -5,10 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>廣播劇 × 追漫 同好頁</title>
 
-  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-  <!-- 粉圓體 -->
   <style>
     @import url('https://cdn.jsdelivr.net/npm/jf-openhuninn@1.1.0/jf-openhuninn.css');
 
@@ -24,21 +26,22 @@
       --soft2: #f3edf9;
     }
 
-    html, body, * {
+    html, body, #root, * {
       font-family: 'jf-openhuninn', 'Noto Sans TC', sans-serif !important;
     }
 
     body {
       background:
-        radial-gradient(circle at top center, rgba(225, 211, 245, .38), transparent 300px),
+        radial-gradient(circle at top center, rgba(225, 211, 245, .38), transparent 310px),
         var(--bg);
       color: var(--text);
+      min-height: 100vh;
     }
 
     .page {
       max-width: 760px;
       margin: 0 auto;
-      padding: 24px 18px 56px;
+      padding: 24px 18px 64px;
     }
 
     .hero-icon {
@@ -52,6 +55,15 @@
       margin: 0 auto 16px;
       color: #b29acb;
       box-shadow: 0 10px 26px rgba(112, 77, 143, .08);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .hero-icon img,
+    .cover-img img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
 
     .thread-btn {
@@ -123,6 +135,7 @@
       border-radius: 14px;
       padding: 18px 20px;
       min-height: 118px;
+      position: relative;
     }
 
     .cp-card.wide {
@@ -223,6 +236,7 @@
       border: 1px solid #e5d6f0;
       border-radius: 14px;
       padding: 18px 20px;
+      position: relative;
     }
 
     .rank {
@@ -238,13 +252,123 @@
       margin-bottom: 7px;
     }
 
-    .hidden {
-      display: none !important;
+    .edit-input,
+    .edit-textarea {
+      width: 100%;
+      border: 1px solid #e2cfee;
+      background: rgba(255,255,255,.72);
+      border-radius: 9px;
+      padding: 6px 8px;
+      outline: none;
+      color: var(--text);
+    }
+
+    .edit-textarea {
+      min-height: 72px;
+      resize: vertical;
+    }
+
+    .mini-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      border: 1px solid #dfd0ef;
+      background: #fff;
+      color: #7d5ba7;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 12px;
+      transition: .18s;
+    }
+
+    .mini-btn:hover {
+      background: #f7effc;
+    }
+
+    .danger-btn {
+      color: #bc5e89;
+      border-color: #efcade;
+    }
+
+    .floating {
+      position: fixed;
+      right: 22px;
+      bottom: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 50;
+    }
+
+    .float-btn {
+      width: 52px;
+      height: 52px;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      border: 1px solid #dfd0ef;
+      box-shadow: 0 8px 24px rgba(78, 47, 100, .12);
+      background: white;
+      color: #7654a2;
+      font-weight: 800;
+      transition: .18s;
+    }
+
+    .float-btn:hover {
+      transform: translateY(-2px);
+      background: #f7effc;
+    }
+
+    .save-btn {
+      background: #8d62ba;
+      color: #fff;
+      border-color: #8d62ba;
+    }
+
+    .upload-cover {
+      position: absolute;
+      inset: 0;
+      background: rgba(41, 23, 64, .45);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      opacity: 0;
+      transition: .2s;
+      cursor: pointer;
+      font-size: 12px;
+      text-align: center;
+    }
+
+    .hero-icon:hover .upload-cover,
+    .cover-img:hover .upload-cover {
+      opacity: 1;
+    }
+
+    .cover-img {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      border: 1px solid #eadcf4;
+      background: #f8eef7;
+      overflow: hidden;
+      position: relative;
+      display: grid;
+      place-items: center;
+      color: #b9a4cc;
+      flex: 0 0 auto;
+    }
+
+    .loading {
+      min-height: 70vh;
+      display: grid;
+      place-items: center;
+      color: #9c8cb8;
+      font-weight: 800;
     }
 
     @media (max-width: 640px) {
       .page {
-        padding: 22px 14px 44px;
+        padding: 22px 14px 48px;
       }
 
       .cp-grid {
@@ -264,225 +388,415 @@
       .tabs {
         margin-top: 26px;
       }
+
+      .floating {
+        right: 14px;
+        bottom: 14px;
+      }
     }
   </style>
 </head>
 
 <body>
-  <main class="page">
-    <header class="text-center pt-2">
-      <div class="hero-icon" aria-hidden="true">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useEffect, useState } = React;
+
+    // 這裡沿用你原本 txt 的 Supabase 設定。這是 anon key，不是 service role key。
+    const SUPABASE_URL = 'https://gvzqhwnjuxmnoayytytz.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd2enFod25qdXhtbm9heXl0eXR6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk4NTEwMDIsImV4cCI6MjA5NTQyNzAwMn0.tRk2EcOJTMcXYZvjLe3pit4qHBCsP4S9RJj8aflmi_Y';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // 為了不要覆蓋你原本自介網站資料，這一頁先存 id = 2
+    const SETTINGS_ID = 2;
+
+    const defaultData = {
+      hero: {
+        icon: "",
+        title: "廣播劇 × 追漫 同好頁",
+        subtitle: "如果你也掉進同一個坑\\n歡迎來找我說話 ♡",
+        threadText: "◎ Threads で找我",
+        threadUrl: "https://www.threads.net/"
+      },
+      tabs: {
+        radio: {
+          label: "廣播劇",
+          icon: "♫",
+          cp: [
+            { id: 1, work: "天官賜福", name: "花城 × 謝憐", tags: ["BL"], desc: "一個愛了八百年，一個用盡一生去回應" },
+            { id: 2, work: "魔道祖師", name: "藍湛 × 魏嬰", tags: ["BL"], desc: "一個冷若冰霜，一個偏偏要把他融化" },
+            { id: 3, work: "待填入", name: "你的下一個 CP ♡", tags: [], desc: "" }
+          ],
+          quotes: [
+            { id: 1, text: "為你戰死，是我至高無上的榮耀。", from: "花城｜天官賜福" },
+            { id: 2, text: "天天就是天天。", from: "魏嬰｜魔道祖師" }
+          ],
+          recs: [
+            { id: 1, title: "天官賜福", tags: ["BL", "仙俠", "虐戀"], desc: "廣播劇還原度極高，花城聲線讓人融化。入坑必聽，沒有之一。", image: "" },
+            { id: 2, title: "魔道祖師", tags: ["BL", "玄幻", "歡喜冤家"], desc: "邊做事邊聽最適合，魏嬰鬧完藍湛的片段每次都能笑出來。", image: "" }
+          ]
+        },
+        comic: {
+          label: "韓漫 / 小說",
+          icon: "▣",
+          cp: [
+            { id: 1, work: "我的青梅竹馬", name: "男主 × 女主", tags: ["BG"], desc: "青梅竹馬設定，甜度爆表" },
+            { id: 2, work: "Painter of the Night", name: "尹成昊 × 裴奈匀", tags: ["BL"], desc: "畫風絕美，劇情讓人又愛又痛" },
+            { id: 3, work: "待填入", name: "你的下一個 CP ♡", tags: [], desc: "" }
+          ],
+          quotes: [
+            { id: 1, text: "（你的第一句台詞）", from: "角色｜作品名" }
+          ],
+          recs: [
+            { id: 1, title: "Painter of the Night", tags: ["BL", "古風", "畫風絕美"], desc: "韓漫 BL 必坑，畫風細膩到每格都想截圖。劇情虐但停不下來。", image: "" },
+            { id: 2, title: "惡役千金的生存手冊", tags: ["BG", "逆襲", "爽文"], desc: "女主超帥，劇情節奏快，看了第一話就停不下來的那種。", image: "" },
+            { id: 3, title: "獨家！我的老公是惡役", tags: ["BG", "穿書", "甜虐"], desc: "穿書設定加惡役男主，甜度和虐度都到位，很適合當入坑韓漫的第一部。", image: "" }
+          ]
+        }
+      }
+    };
+
+    function IconClock() {
+      return (
         <svg width="34" height="34" viewBox="0 0 24 24" fill="none">
-          <path d="M5 7h9M5 12h7M5 17h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
-          <circle cx="17" cy="16" r="3.2" stroke="currentColor" stroke-width="1.5"/>
-          <path d="M17 14.5v1.7l1.2.8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M5 7h9M5 12h7M5 17h5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/>
+          <circle cx="17" cy="16" r="3.2" stroke="currentColor" strokeWidth="1.5"/>
+          <path d="M17 14.5v1.7l1.2.8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
         </svg>
-      </div>
+      );
+    }
 
-      <h1 class="text-[22px] font-black tracking-wide">廣播劇 × 追漫 同好頁</h1>
-      <p class="mt-4 text-[14px] leading-7 text-[#8d7da7]">
-        如果你也掉進同一個坑<br />
-        歡迎來找我說話 ♡
-      </p>
+    function Field({ value, editing, onChange, multiline=false, className="", placeholder="" }) {
+      if (!editing) return <span className={className}>{value || placeholder}</span>;
+      if (multiline) {
+        return <textarea className={`edit-textarea ${className}`} value={value || ""} placeholder={placeholder} onChange={e => onChange(e.target.value)} />;
+      }
+      return <input className={`edit-input ${className}`} value={value || ""} placeholder={placeholder} onChange={e => onChange(e.target.value)} />;
+    }
 
-      <a class="thread-btn mt-5" href="https://www.threads.net/" target="_blank" rel="noopener">
-        ◎ Threads で找我
-      </a>
-    </header>
+    function splitTags(value) {
+      return value.split(/[、,，]/).map(t => t.trim()).filter(Boolean);
+    }
 
-    <nav class="tabs" aria-label="內容分類">
-      <button class="tab-btn active" data-tab="radio">
-        <span>♫</span>
-        <span>廣播劇</span>
-      </button>
-      <button class="tab-btn" data-tab="comic">
-        <span>▣</span>
-        <span>韓漫 / 小說</span>
-      </button>
-    </nav>
-
-    <!-- 廣播劇 -->
-    <section id="radio" class="tab-panel">
-      <p class="section-title">CP 牆</p>
-
-      <div class="cp-grid">
-        <article class="cp-card">
-          <p class="eyebrow">天官賜福</p>
-          <h2 class="cp-name">花城 × 謝憐</h2>
-          <div class="tag-row">
-            <span class="pill">BL</span>
+    function Tags({ tags, editing, onChange }) {
+      if (!editing) {
+        return (
+          <div className="tag-row">
+            {(tags || []).map((tag, idx) => <span className="pill" key={idx}>{tag}</span>)}
           </div>
-          <p class="desc">一個愛了八百年，一個用盡一生去回應</p>
-        </article>
+        );
+      }
 
-        <article class="cp-card">
-          <p class="eyebrow">魔道祖師</p>
-          <h2 class="cp-name">藍湛 × 魏嬰</h2>
-          <div class="tag-row">
-            <span class="pill">BL</span>
-          </div>
-          <p class="desc">一個冷若冰霜，一個偏偏要把他融化</p>
-        </article>
+      return (
+        <input
+          className="edit-input text-[12px] my-2"
+          value={(tags || []).join("、")}
+          placeholder="標籤，用頓號分隔：BL、古風、甜虐"
+          onChange={e => onChange(splitTags(e.target.value))}
+        />
+      );
+    }
 
-        <article class="cp-card wide">
-          <p class="eyebrow">待填入</p>
-          <h2 class="cp-name text-[#b599c8]">你的下一個 CP ♡</h2>
-        </article>
-      </div>
+    function App() {
+      const [data, setData] = useState(null);
+      const [activeTab, setActiveTab] = useState("radio");
+      const [editing, setEditing] = useState(false);
+      const [saving, setSaving] = useState(false);
 
-      <div class="divider"></div>
+      useEffect(() => {
+        async function loadData() {
+          try {
+            const { data: row, error } = await supabaseClient
+              .from("website_settings")
+              .select("data")
+              .eq("id", SETTINGS_ID)
+              .single();
 
-      <p class="section-title">台詞收藏</p>
+            if (!error && row?.data && Object.keys(row.data).length > 0) {
+              setData(row.data);
+              return;
+            }
+          } catch (err) {
+            console.warn("Supabase 載入失敗，改用預設資料。", err);
+          }
 
-      <div class="space-y-3">
-        <article class="quote-card">
-          <div class="quote-mark">"</div>
-          <p class="quote-text">為你戰死，是我至高無上的榮耀。</p>
-          <p class="quote-from">— 花城｜天官賜福</p>
-        </article>
+          const local = localStorage.getItem("fanpage_data");
+          setData(local ? JSON.parse(local) : defaultData);
+        }
 
-        <article class="quote-card">
-          <div class="quote-mark">"</div>
-          <p class="quote-text">天天就是天天。</p>
-          <p class="quote-from">— 魏嬰｜魔道祖師</p>
-        </article>
-      </div>
+        loadData();
+      }, []);
 
-      <div class="divider"></div>
+      function updateHero(key, value) {
+        setData(prev => ({ ...prev, hero: { ...prev.hero, [key]: value } }));
+      }
 
-      <p class="section-title">推坑區</p>
+      function updateTab(tabKey, section, value) {
+        setData(prev => ({
+          ...prev,
+          tabs: {
+            ...prev.tabs,
+            [tabKey]: {
+              ...prev.tabs[tabKey],
+              [section]: value
+            }
+          }
+        }));
+      }
 
-      <div class="rec-list">
-        <article class="rec-card">
-          <div class="rank">01</div>
-          <div>
-            <h3 class="rec-title">天官賜福</h3>
-            <div class="tag-row">
-              <span class="pill">BL</span>
-              <span class="pill">仙俠</span>
-              <span class="pill">虐戀</span>
+      async function handleUpload(e, callback) {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        try {
+          const fileExt = file.name.split(".").pop();
+          const safeName = `${Date.now()}_${Math.random().toString(16).slice(2)}.${fileExt}`;
+          const { error } = await supabaseClient.storage.from("assets").upload(safeName, file, {
+            cacheControl: "3600",
+            upsert: false
+          });
+
+          if (error) throw error;
+
+          const { data: publicData } = supabaseClient.storage.from("assets").getPublicUrl(safeName);
+          callback(publicData.publicUrl);
+        } catch (err) {
+          alert("雲端圖片上傳失敗，會先改用本機預覽儲存。\\n錯誤：" + err.message);
+
+          const reader = new FileReader();
+          reader.onloadend = () => callback(reader.result);
+          reader.readAsDataURL(file);
+        }
+      }
+
+      async function saveData() {
+        setSaving(true);
+        localStorage.setItem("fanpage_data", JSON.stringify(data));
+
+        try {
+          const { error } = await supabaseClient
+            .from("website_settings")
+            .upsert({ id: SETTINGS_ID, data });
+
+          if (error) throw error;
+
+          alert("已儲存到雲端！");
+          setEditing(false);
+        } catch (err) {
+          alert("雲端儲存失敗，但已暫存在這台瀏覽器。\\n錯誤：" + err.message);
+        } finally {
+          setSaving(false);
+        }
+      }
+
+      function addItem(section) {
+        const tab = data.tabs[activeTab];
+        const newItem = section === "cp"
+          ? { id: Date.now(), work: "新作品", name: "角色 A × 角色 B", tags: ["BL"], desc: "寫一點你想說的描述" }
+          : section === "quotes"
+          ? { id: Date.now(), text: "新的台詞", from: "角色｜作品名" }
+          : { id: Date.now(), title: "新推坑作品", tags: ["BL"], desc: "寫下推薦理由", image: "" };
+
+        updateTab(activeTab, section, [...tab[section], newItem]);
+      }
+
+      function removeItem(section, id) {
+        const tab = data.tabs[activeTab];
+        updateTab(activeTab, section, tab[section].filter(item => item.id !== id));
+      }
+
+      function updateItem(section, id, key, value) {
+        const tab = data.tabs[activeTab];
+        updateTab(
+          activeTab,
+          section,
+          tab[section].map(item => item.id === id ? { ...item, [key]: value } : item)
+        );
+      }
+
+      if (!data) return <div className="loading">載入同好頁中...</div>;
+
+      const tab = data.tabs[activeTab];
+
+      return (
+        <main className="page">
+          <header className="text-center pt-2">
+            <div className="hero-icon" aria-hidden="true">
+              {data.hero.icon ? <img src={data.hero.icon} alt="hero icon" /> : <IconClock />}
+              {editing && (
+                <label className="upload-cover">
+                  <input type="file" accept="image/*" className="hidden" onChange={e => handleUpload(e, url => updateHero("icon", url))} />
+                  上傳 icon
+                </label>
+              )}
             </div>
-            <p class="desc">廣播劇還原度極高，花城聲線讓人融化。入坑必聽，沒有之一。</p>
-          </div>
-        </article>
 
-        <article class="rec-card">
-          <div class="rank">02</div>
-          <div>
-            <h3 class="rec-title">魔道祖師</h3>
-            <div class="tag-row">
-              <span class="pill">BL</span>
-              <span class="pill">玄幻</span>
-              <span class="pill">歡喜冤家</span>
+            <h1 className="text-[22px] font-black tracking-wide">
+              <Field value={data.hero.title} editing={editing} onChange={v => updateHero("title", v)} />
+            </h1>
+
+            <div className="mt-4 text-[14px] leading-7 text-[#8d7da7] whitespace-pre-line">
+              <Field value={data.hero.subtitle} editing={editing} multiline onChange={v => updateHero("subtitle", v)} />
             </div>
-            <p class="desc">邊做事邊聽最適合，魏嬰鬧完藍湛的片段每次都能笑出來。</p>
-          </div>
-        </article>
-      </div>
-    </section>
 
-    <!-- 韓漫 / 小說 -->
-    <section id="comic" class="tab-panel hidden">
-      <p class="section-title">CP 牆</p>
+            {editing && (
+              <div className="max-w-md mx-auto mt-4 grid gap-2">
+                <Field value={data.hero.threadText} editing={editing} onChange={v => updateHero("threadText", v)} placeholder="Threads 按鈕文字" />
+                <Field value={data.hero.threadUrl} editing={editing} onChange={v => updateHero("threadUrl", v)} placeholder="Threads 連結" />
+              </div>
+            )}
 
-      <div class="cp-grid">
-        <article class="cp-card">
-          <p class="eyebrow">我的青梅竹馬</p>
-          <h2 class="cp-name">男主 × 女主</h2>
-          <div class="tag-row">
-            <span class="pill">BG</span>
-          </div>
-          <p class="desc">青梅竹馬設定，甜度爆表</p>
-        </article>
+            {!editing && (
+              <a className="thread-btn mt-5" href={data.hero.threadUrl} target="_blank" rel="noopener">
+                {data.hero.threadText}
+              </a>
+            )}
+          </header>
 
-        <article class="cp-card">
-          <p class="eyebrow">Painter of the Night</p>
-          <h2 class="cp-name">尹成昊 × 裴奈匀</h2>
-          <div class="tag-row">
-            <span class="pill">BL</span>
-          </div>
-          <p class="desc">畫風絕美，劇情讓人又愛又痛</p>
-        </article>
+          <nav className="tabs" aria-label="內容分類">
+            {Object.entries(data.tabs).map(([key, item]) => (
+              <button key={key} className={`tab-btn ${activeTab === key ? "active" : ""}`} onClick={() => setActiveTab(key)}>
+                <span>{item.icon}</span>
+                <span>{item.label}</span>
+              </button>
+            ))}
+          </nav>
 
-        <article class="cp-card wide">
-          <p class="eyebrow">待填入</p>
-          <h2 class="cp-name text-[#b599c8]">你的下一個 CP ♡</h2>
-        </article>
-      </div>
-
-      <div class="divider"></div>
-
-      <p class="section-title">台詞收藏</p>
-
-      <article class="quote-card">
-        <div class="quote-mark">"</div>
-        <p class="quote-text">（你的第一句台詞）</p>
-        <p class="quote-from">— 角色｜作品名</p>
-      </article>
-
-      <div class="divider"></div>
-
-      <p class="section-title">推坑區</p>
-
-      <div class="rec-list">
-        <article class="rec-card">
-          <div class="rank">01</div>
-          <div>
-            <h3 class="rec-title">Painter of the Night</h3>
-            <div class="tag-row">
-              <span class="pill">BL</span>
-              <span class="pill">古風</span>
-              <span class="pill">畫風絕美</span>
+          {editing && (
+            <div className="grid grid-cols-2 gap-2 mb-6">
+              <div>
+                <p className="text-xs text-[#9c8cb8] mb-1">目前頁籤 icon</p>
+                <Field value={tab.icon} editing={editing} onChange={v => updateTab(activeTab, "icon", v)} />
+              </div>
+              <div>
+                <p className="text-xs text-[#9c8cb8] mb-1">目前頁籤名稱</p>
+                <Field value={tab.label} editing={editing} onChange={v => updateTab(activeTab, "label", v)} />
+              </div>
             </div>
-            <p class="desc">韓漫 BL 必坑，畫風細膩到每格都想截圖。劇情虐但停不下來。</p>
+          )}
+
+          <p className="section-title">CP 牆</p>
+
+          <section className="cp-grid">
+            {tab.cp.map((item, index) => (
+              <article className={`cp-card ${index === 2 ? "wide" : ""}`} key={item.id}>
+                {editing && (
+                  <button className="mini-btn danger-btn absolute right-3 top-3" onClick={() => removeItem("cp", item.id)}>
+                    刪除
+                  </button>
+                )}
+
+                <p className="eyebrow">
+                  <Field value={item.work} editing={editing} onChange={v => updateItem("cp", item.id, "work", v)} placeholder="作品名" />
+                </p>
+                <h2 className="cp-name">
+                  <Field value={item.name} editing={editing} onChange={v => updateItem("cp", item.id, "name", v)} placeholder="角色 A × 角色 B" />
+                </h2>
+                <Tags tags={item.tags} editing={editing} onChange={v => updateItem("cp", item.id, "tags", v)} />
+                <p className="desc">
+                  <Field value={item.desc} editing={editing} multiline onChange={v => updateItem("cp", item.id, "desc", v)} placeholder="描述" />
+                </p>
+              </article>
+            ))}
+
+            {editing && (
+              <button className="cp-card wide text-[#8d62ba] font-bold border-dashed" onClick={() => addItem("cp")}>
+                ＋ 新增 CP
+              </button>
+            )}
+          </section>
+
+          <div className="divider"></div>
+
+          <p className="section-title">台詞收藏</p>
+
+          <section className="space-y-3">
+            {tab.quotes.map(item => (
+              <article className="quote-card" key={item.id}>
+                {editing && (
+                  <button className="mini-btn danger-btn absolute right-3 top-3 z-10" onClick={() => removeItem("quotes", item.id)}>
+                    刪除
+                  </button>
+                )}
+                <div className="quote-mark">"</div>
+                <p className="quote-text">
+                  <Field value={item.text} editing={editing} multiline onChange={v => updateItem("quotes", item.id, "text", v)} placeholder="台詞內容" />
+                </p>
+                <p className="quote-from">
+                  — <Field value={item.from} editing={editing} onChange={v => updateItem("quotes", item.id, "from", v)} placeholder="角色｜作品名" />
+                </p>
+              </article>
+            ))}
+
+            {editing && (
+              <button className="mini-btn" onClick={() => addItem("quotes")}>＋ 新增台詞</button>
+            )}
+          </section>
+
+          <div className="divider"></div>
+
+          <p className="section-title">推坑區</p>
+
+          <section className="rec-list">
+            {tab.recs.map((item, index) => (
+              <article className="rec-card" key={item.id}>
+                {editing && (
+                  <button className="mini-btn danger-btn absolute right-3 top-3 z-10" onClick={() => removeItem("recs", item.id)}>
+                    刪除
+                  </button>
+                )}
+
+                <div className="rank">{String(index + 1).padStart(2, "0")}</div>
+
+                <div className="flex gap-3">
+                  {(editing || item.image) && (
+                    <div className="cover-img">
+                      {item.image ? <img src={item.image} alt={item.title} /> : "圖"}
+                      {editing && (
+                        <label className="upload-cover">
+                          <input type="file" accept="image/*" className="hidden" onChange={e => handleUpload(e, url => updateItem("recs", item.id, "image", url))} />
+                          上傳
+                        </label>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="flex-1">
+                    <h3 className="rec-title">
+                      <Field value={item.title} editing={editing} onChange={v => updateItem("recs", item.id, "title", v)} placeholder="作品名稱" />
+                    </h3>
+                    <Tags tags={item.tags} editing={editing} onChange={v => updateItem("recs", item.id, "tags", v)} />
+                    <p className="desc">
+                      <Field value={item.desc} editing={editing} multiline onChange={v => updateItem("recs", item.id, "desc", v)} placeholder="推薦原因" />
+                    </p>
+                  </div>
+                </div>
+              </article>
+            ))}
+
+            {editing && (
+              <button className="mini-btn justify-center py-3 rounded-[14px]" onClick={() => addItem("recs")}>
+                ＋ 新增推坑作品
+              </button>
+            )}
+          </section>
+
+          <div className="floating">
+            {editing && (
+              <button className="float-btn save-btn" onClick={saveData} disabled={saving} title="儲存">
+                {saving ? "…" : "✓"}
+              </button>
+            )}
+            <button className="float-btn" onClick={() => setEditing(!editing)} title="編輯">
+              {editing ? "×" : "✎"}
+            </button>
           </div>
-        </article>
+        </main>
+      );
+    }
 
-        <article class="rec-card">
-          <div class="rank">02</div>
-          <div>
-            <h3 class="rec-title">惡役千金的生存手冊</h3>
-            <div class="tag-row">
-              <span class="pill">BG</span>
-              <span class="pill">逆襲</span>
-              <span class="pill">爽文</span>
-            </div>
-            <p class="desc">女主超帥，劇情節奏快，看了第一話就停不下來的那種。</p>
-          </div>
-        </article>
-
-        <article class="rec-card">
-          <div class="rank">03</div>
-          <div>
-            <h3 class="rec-title">獨家！我的老公是惡役</h3>
-            <div class="tag-row">
-              <span class="pill">BG</span>
-              <span class="pill">穿書</span>
-              <span class="pill">甜虐</span>
-            </div>
-            <p class="desc">穿書設定加惡役男主，甜度和虐度都到位，很適合當入坑韓漫的第一部。</p>
-          </div>
-        </article>
-      </div>
-    </section>
-  </main>
-
-  <script>
-    const buttons = document.querySelectorAll('.tab-btn');
-    const panels = document.querySelectorAll('.tab-panel');
-
-    buttons.forEach((button) => {
-      button.addEventListener('click', () => {
-        const target = button.dataset.tab;
-
-        buttons.forEach((btn) => btn.classList.remove('active'));
-        button.classList.add('active');
-
-        panels.forEach((panel) => {
-          panel.classList.toggle('hidden', panel.id !== target);
-        });
-      });
-    });
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
   </script>
 </body>
 </html>
