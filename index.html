@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>廣播劇 × 追漫 同好頁</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- 粉圓體 -->
+  <style>
+    @import url('https://cdn.jsdelivr.net/npm/jf-openhuninn@1.1.0/jf-openhuninn.css');
+
+    :root {
+      --bg: #fdfaf6;
+      --card: #fffdfb;
+      --text: #20162f;
+      --muted: #9c8cb8;
+      --line: #eadcf4;
+      --purple: #8d62ba;
+      --pink: #d27ab0;
+      --soft: #f8eef7;
+      --soft2: #f3edf9;
+    }
+
+    html, body, * {
+      font-family: 'jf-openhuninn', 'Noto Sans TC', sans-serif !important;
+    }
+
+    body {
+      background:
+        radial-gradient(circle at top center, rgba(225, 211, 245, .38), transparent 300px),
+        var(--bg);
+      color: var(--text);
+    }
+
+    .page {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 24px 18px 56px;
+    }
+
+    .hero-icon {
+      width: 70px;
+      height: 70px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, #f3ecfb, #eee4f8);
+      border: 1px solid #dfd0ef;
+      display: grid;
+      place-items: center;
+      margin: 0 auto 16px;
+      color: #b29acb;
+      box-shadow: 0 10px 26px rgba(112, 77, 143, .08);
+    }
+
+    .thread-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 16px;
+      border: 1px solid #dfd0ef;
+      border-radius: 999px;
+      background: #f5effb;
+      color: var(--purple);
+      font-size: 14px;
+      transition: .2s;
+    }
+
+    .thread-btn:hover {
+      transform: translateY(-1px);
+      background: #efe4fa;
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      margin: 32px 0 30px;
+      border: 1px solid #cbbdd7;
+      border-radius: 9px;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .tab-btn {
+      height: 62px;
+      display: grid;
+      place-items: center;
+      gap: 2px;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      cursor: pointer;
+      background: transparent;
+      border: 0;
+    }
+
+    .tab-btn.active {
+      outline: 2px solid #111;
+      outline-offset: -2px;
+      border-radius: 8px;
+      background: #fffdfa;
+    }
+
+    .section-title {
+      color: var(--muted);
+      font-size: 13px;
+      margin: 22px 0 12px;
+      padding-left: 2px;
+    }
+
+    .cp-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+    }
+
+    .cp-card {
+      background: linear-gradient(180deg, var(--soft), #fff9fe);
+      border: 1px solid #ebcde8;
+      border-top: 4px solid transparent;
+      border-image: linear-gradient(90deg, var(--purple), var(--pink)) 1;
+      border-radius: 14px;
+      padding: 18px 20px;
+      min-height: 118px;
+    }
+
+    .cp-card.wide {
+      grid-column: 1 / -1;
+    }
+
+    .eyebrow {
+      color: #b79cc8;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .02em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .cp-name {
+      font-weight: 800;
+      font-size: 16px;
+      margin-bottom: 8px;
+    }
+
+    .tag-row {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin: 6px 0 10px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 9px;
+      border-radius: 999px;
+      background: #f4e9fb;
+      border: 1px solid #e6d5f4;
+      color: #7955aa;
+      font-size: 11px;
+      line-height: 1.4;
+    }
+
+    .desc {
+      color: #7c6e93;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .divider {
+      height: 1px;
+      background: var(--line);
+      margin: 26px 0 18px;
+    }
+
+    .quote-card {
+      position: relative;
+      background: var(--card);
+      border: 1px solid #e5d6f0;
+      border-radius: 14px;
+      padding: 26px 30px;
+      min-height: 96px;
+      box-shadow: 0 8px 20px rgba(103, 65, 128, .04);
+    }
+
+    .quote-mark {
+      position: absolute;
+      top: 14px;
+      left: 22px;
+      color: #f0dff3;
+      font-size: 30px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .quote-text {
+      padding-left: 26px;
+      padding-right: 110px;
+      font-size: 15px;
+      line-height: 1.8;
+    }
+
+    .quote-from {
+      position: absolute;
+      right: 22px;
+      bottom: 18px;
+      color: #b18cc7;
+      font-size: 13px;
+    }
+
+    .rec-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .rec-card {
+      display: grid;
+      grid-template-columns: 44px 1fr;
+      gap: 16px;
+      background: var(--card);
+      border: 1px solid #e5d6f0;
+      border-radius: 14px;
+      padding: 18px 20px;
+    }
+
+    .rank {
+      color: #efd8ee;
+      font-size: 25px;
+      font-weight: 900;
+      line-height: 1.1;
+    }
+
+    .rec-title {
+      font-size: 16px;
+      font-weight: 900;
+      margin-bottom: 7px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 640px) {
+      .page {
+        padding: 22px 14px 44px;
+      }
+
+      .cp-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .quote-text {
+        padding-right: 0;
+      }
+
+      .quote-from {
+        position: static;
+        text-align: right;
+        margin-top: 16px;
+      }
+
+      .tabs {
+        margin-top: 26px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="page">
+    <header class="text-center pt-2">
+      <div class="hero-icon" aria-hidden="true">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none">
+          <path d="M5 7h9M5 12h7M5 17h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+          <circle cx="17" cy="16" r="3.2" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M17 14.5v1.7l1.2.8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+
+      <h1 class="text-[22px] font-black tracking-wide">廣播劇 × 追漫 同好頁</h1>
+      <p class="mt-4 text-[14px] leading-7 text-[#8d7da7]">
+        如果你也掉進同一個坑<br />
+        歡迎來找我說話 ♡
+      </p>
+
+      <a class="thread-btn mt-5" href="https://www.threads.net/" target="_blank" rel="noopener">
+        ◎ Threads で找我
+      </a>
+    </header>
+
+    <nav class="tabs" aria-label="內容分類">
+      <button class="tab-btn active" data-tab="radio">
+        <span>♫</span>
+        <span>廣播劇</span>
+      </button>
+      <button class="tab-btn" data-tab="comic">
+        <span>▣</span>
+        <span>韓漫 / 小說</span>
+      </button>
+    </nav>
+
+    <!-- 廣播劇 -->
+    <section id="radio" class="tab-panel">
+      <p class="section-title">CP 牆</p>
+
+      <div class="cp-grid">
+        <article class="cp-card">
+          <p class="eyebrow">天官賜福</p>
+          <h2 class="cp-name">花城 × 謝憐</h2>
+          <div class="tag-row">
+            <span class="pill">BL</span>
+          </div>
+          <p class="desc">一個愛了八百年，一個用盡一生去回應</p>
+        </article>
+
+        <article class="cp-card">
+          <p class="eyebrow">魔道祖師</p>
+          <h2 class="cp-name">藍湛 × 魏嬰</h2>
+          <div class="tag-row">
+            <span class="pill">BL</span>
+          </div>
+          <p class="desc">一個冷若冰霜，一個偏偏要把他融化</p>
+        </article>
+
+        <article class="cp-card wide">
+          <p class="eyebrow">待填入</p>
+          <h2 class="cp-name text-[#b599c8]">你的下一個 CP ♡</h2>
+        </article>
+      </div>
+
+      <div class="divider"></div>
+
+      <p class="section-title">台詞收藏</p>
+
+      <div class="space-y-3">
+        <article class="quote-card">
+          <div class="quote-mark">"</div>
+          <p class="quote-text">為你戰死，是我至高無上的榮耀。</p>
+          <p class="quote-from">— 花城｜天官賜福</p>
+        </article>
+
+        <article class="quote-card">
+          <div class="quote-mark">"</div>
+          <p class="quote-text">天天就是天天。</p>
+          <p class="quote-from">— 魏嬰｜魔道祖師</p>
+        </article>
+      </div>
+
+      <div class="divider"></div>
+
+      <p class="section-title">推坑區</p>
+
+      <div class="rec-list">
+        <article class="rec-card">
+          <div class="rank">01</div>
+          <div>
+            <h3 class="rec-title">天官賜福</h3>
+            <div class="tag-row">
+              <span class="pill">BL</span>
+              <span class="pill">仙俠</span>
+              <span class="pill">虐戀</span>
+            </div>
+            <p class="desc">廣播劇還原度極高，花城聲線讓人融化。入坑必聽，沒有之一。</p>
+          </div>
+        </article>
+
+        <article class="rec-card">
+          <div class="rank">02</div>
+          <div>
+            <h3 class="rec-title">魔道祖師</h3>
+            <div class="tag-row">
+              <span class="pill">BL</span>
+              <span class="pill">玄幻</span>
+              <span class="pill">歡喜冤家</span>
+            </div>
+            <p class="desc">邊做事邊聽最適合，魏嬰鬧完藍湛的片段每次都能笑出來。</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- 韓漫 / 小說 -->
+    <section id="comic" class="tab-panel hidden">
+      <p class="section-title">CP 牆</p>
+
+      <div class="cp-grid">
+        <article class="cp-card">
+          <p class="eyebrow">我的青梅竹馬</p>
+          <h2 class="cp-name">男主 × 女主</h2>
+          <div class="tag-row">
+            <span class="pill">BG</span>
+          </div>
+          <p class="desc">青梅竹馬設定，甜度爆表</p>
+        </article>
+
+        <article class="cp-card">
+          <p class="eyebrow">Painter of the Night</p>
+          <h2 class="cp-name">尹成昊 × 裴奈匀</h2>
+          <div class="tag-row">
+            <span class="pill">BL</span>
+          </div>
+          <p class="desc">畫風絕美，劇情讓人又愛又痛</p>
+        </article>
+
+        <article class="cp-card wide">
+          <p class="eyebrow">待填入</p>
+          <h2 class="cp-name text-[#b599c8]">你的下一個 CP ♡</h2>
+        </article>
+      </div>
+
+      <div class="divider"></div>
+
+      <p class="section-title">台詞收藏</p>
+
+      <article class="quote-card">
+        <div class="quote-mark">"</div>
+        <p class="quote-text">（你的第一句台詞）</p>
+        <p class="quote-from">— 角色｜作品名</p>
+      </article>
+
+      <div class="divider"></div>
+
+      <p class="section-title">推坑區</p>
+
+      <div class="rec-list">
+        <article class="rec-card">
+          <div class="rank">01</div>
+          <div>
+            <h3 class="rec-title">Painter of the Night</h3>
+            <div class="tag-row">
+              <span class="pill">BL</span>
+              <span class="pill">古風</span>
+              <span class="pill">畫風絕美</span>
+            </div>
+            <p class="desc">韓漫 BL 必坑，畫風細膩到每格都想截圖。劇情虐但停不下來。</p>
+          </div>
+        </article>
+
+        <article class="rec-card">
+          <div class="rank">02</div>
+          <div>
+            <h3 class="rec-title">惡役千金的生存手冊</h3>
+            <div class="tag-row">
+              <span class="pill">BG</span>
+              <span class="pill">逆襲</span>
+              <span class="pill">爽文</span>
+            </div>
+            <p class="desc">女主超帥，劇情節奏快，看了第一話就停不下來的那種。</p>
+          </div>
+        </article>
+
+        <article class="rec-card">
+          <div class="rank">03</div>
+          <div>
+            <h3 class="rec-title">獨家！我的老公是惡役</h3>
+            <div class="tag-row">
+              <span class="pill">BG</span>
+              <span class="pill">穿書</span>
+              <span class="pill">甜虐</span>
+            </div>
+            <p class="desc">穿書設定加惡役男主，甜度和虐度都到位，很適合當入坑韓漫的第一部。</p>
+          </div>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const buttons = document.querySelectorAll('.tab-btn');
+    const panels = document.querySelectorAll('.tab-panel');
+
+    buttons.forEach((button) => {
+      button.addEventListener('click', () => {
+        const target = button.dataset.tab;
+
+        buttons.forEach((btn) => btn.classList.remove('active'));
+        button.classList.add('active');
+
+        panels.forEach((panel) => {
+          panel.classList.toggle('hidden', panel.id !== target);
+        });
+      });
+    });
+  </script>
+</body>
+</html>
